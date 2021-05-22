@@ -1,40 +1,38 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import datetime, pandas
-from pprint import pprint
+import argparse
 
-env = Environment(
-    loader=FileSystemLoader('.'),
-    autoescape=select_autoescape(['html', 'xml'])
-)
+def main():
+    env = Environment(
+        loader=FileSystemLoader('.'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
 
-template = env.get_template('template.html')
+    template = env.get_template('template.html')
 
-event1 = datetime.datetime(year=1920, month=1, day=1, hour=0)
-event2 = datetime.datetime.now()
-delta = event2-event1
+    parser = argparse.ArgumentParser(description='Программа наполнения сайта вин')
+    parser.add_argument('--path', help='Путь к таблице вин', default='~/devman/wine-master/wine_example.xlsx')
+    args = parser.parse_args()
 
-excel_data_df = pandas.read_excel('~/devman/wine3.xlsx', keep_default_na=False)
-raw_dict = excel_data_df.to_dict(orient='records')
+    drinks_df = pandas.read_excel(args.path, keep_default_na=False)
+    raw_tree_drinks = drinks_df.to_dict(orient='records')
 
-categories = excel_data_df.groupby('Категория').groups
+    drinks_by_categories = drinks_df.groupby('Категория').groups
 
-for key in categories:
-    new_val = []
-    for el in categories[key]:
-        new_val.append(raw_dict[el])
-    categories[key] = new_val
+    for cat, drinks in drinks_by_categories.items():
+        drinks_by_categories[cat] = [raw_tree_drinks[el] for el in drinks]
 
-pprint(categories)
+    rendered_page = template.render(
+        age=(datetime.datetime.now().year - 1920),
+        drinks_by_categories=drinks_by_categories
+    )
 
-rendered_page = template.render(
-    time_text=(delta.days // 365),
-    categories=categories
-)
+    with open('index.html', 'w', encoding="utf8") as file:
+        file.write(rendered_page)
 
-with open('index.html', 'w', encoding="utf8") as file:
-    file.write(rendered_page)
+    server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
+    server.serve_forever()
 
-server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
-server.serve_forever()
-
+if __name__ == '__main__':
+    main()

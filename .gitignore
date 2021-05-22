@@ -1,3 +1,7 @@
 env/
 .vscode/
 
+/.idea/
+/.ipynb_checkpoints/
+.replit
+index.html
