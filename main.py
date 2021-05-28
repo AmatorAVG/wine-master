@@ -1,7 +1,10 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-import datetime, pandas
-import argparse, collections
+import datetime
+import pandas
+import argparse
+import collections
+
 
 def main():
     env = Environment(
@@ -22,7 +25,7 @@ def main():
         drinks_by_categories[product['Категория']].append(product)
 
     rendered_page = template.render(
-        age=(datetime.datetime.now().year - 1920),
+        age=datetime.datetime.now().year - 1920,
         drinks_by_categories=drinks_by_categories
     )
 
@@ -31,6 +34,7 @@ def main():
 
     server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
     server.serve_forever()
+
 
 if __name__ == '__main__':
     main()
